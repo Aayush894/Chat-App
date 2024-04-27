@@ -1,14 +1,15 @@
-import "./App.css";
-import { Button } from "@chakra-ui/react";
+import './App.css'
+import MainContainer from './Components/MainContainer'
 
 function App() {
+
   return (
     <>
-      <div>
-        <Button>I just consumed some ⚡️Chakra!</Button>
+      <div className='App'> 
+        <MainContainer />
       </div>
     </>
-  );
+  )
 }
 
-export default App;
+export default App
