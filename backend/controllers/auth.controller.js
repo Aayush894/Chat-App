@@ -1,15 +1,47 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
 
-export const login = (req, res) => {
-    res.send("Login User");
+export const login = async (req, res) => {
+    try {
+      const {username, password} = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({message: "All fields are required"});
+      }
+
+      const user = await User.findOne({username});
+
+      if (!user) {
+        return res.status(400).json({message: "User does not exist"});
+      }
+      
+      const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
+
+      if (!isPasswordCorrect) {
+        return res.status(400).json({message: "Invalid credentials"});
+      }
+
+      generateTokenAndSetCookie(user._id, res);
+
+      res.status(200).json({
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        ProfilePic: user.ProfilePic,
+        message: "User logged in successfully",
+      });
+    } catch (error) {
+        console.log("Error in login User", error.message);
+        res.status(500).json({message: "Internal Server Error"});
+    }
   };
 
 export const signup = async (req, res) => {
     try {
       const {fullName, username, password, confirmPassword, gender} = req.body;
 
-      if (!fullName || !username || !password || !confirmPassword || gender) {
+      if (!fullName || !username || !password || !confirmPassword || !gender) {
         return res.status(400).json({message: "All fields are required"});
       }
 
@@ -40,15 +72,21 @@ export const signup = async (req, res) => {
         ProfilePic: gender === 'male' ? boyProfilePic : girlProfilePic
       });
 
-      await newUser.save();
+      if (newUser) {
 
-      res.status(201).json({
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        username: newUser.username,
-        ProfilePic: newUser.ProfilePic,
-        message: "User registered successfully"
-      });
+        generateTokenAndSetCookie(newUser._id, res);
+        await newUser.save();
+
+        res.status(201).json({
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          username: newUser.username,
+          ProfilePic: newUser.ProfilePic,
+          message: "User registered successfully",
+        });
+      } else {
+        res.status(400).json({message: "Failed to register user"});
+      }
 
     } catch (error) {
         console.log(error);
@@ -57,6 +95,12 @@ export const signup = async (req, res) => {
   };
 
 export const logout = (req, res) => {
-    res.send("Logout User");
+    try {
+      res.cookie("jwt", "", {maxAge: 1});
+      res.status(200).json({message: "User logged out successfully"});
+    } catch (error) {
+      console.log("Error in logout User", error.message);
+      res.status(500).json({message: "Internal Server Error"});
+    }
   };
 
