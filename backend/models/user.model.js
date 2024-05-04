@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     profilePic: {
       type: String,
       default:
-        "https://imgs.search.brave.com/_QS-C_ZdFRoEEb83lITyO3dY1Y6syO6ywUb65b2ZRcQ/rs:fit:500:0:0/g:ce/aHR0cHM6Ly93d3cu/dzNzY2hvb2xzLmNv/bS9ob3d0by9pbWdf/YXZhdGFyLnBuZw",
+        "",
     },
   },
   { timestamps: true }
