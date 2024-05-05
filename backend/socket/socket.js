@@ -1,25 +1,16 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
-import cors from "cors";
 
 const app = express();
-
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-  next();
-});
-
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000"],
     methods: ["GET", "POST"],
   },
 });
-
-app.use(cors());
 
 export const getReceiverSocketId = (receiverId) => {
   return userSocketMap[receiverId];

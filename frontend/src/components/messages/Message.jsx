@@ -19,7 +19,14 @@ const Message = ({ message }) => {
     <div className={`chat ${chatClassName}`}>
       <div className="chat-image avatar">
         <div className="w-10 rounded-full">
-          <img alt="Tailwind CSS chat bubble component" src={profilePic} />
+          <img
+            alt="Tailwind CSS chat bubble component"
+            src={
+              profilePic
+                ? profilePic
+                : "https://imgs.search.brave.com/MpXwHc3OUm2Z6U4IpSlZYWHSjIjjlpPpCfqrJaRwat0/rs:fit:500:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJzLmNvbS9p/bWFnZXMvaGQvY29v/bC1hbmltZS1wcm9m/aWxlLXBpY3R1cmUt/Z21wdW9ldnlkam15/eXR4eS5qcGc"
+            }
+          />
         </div>
       </div>
       <div
