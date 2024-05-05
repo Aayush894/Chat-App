@@ -5,7 +5,7 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-  'Allow-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Credentials': true,
 }
 ));

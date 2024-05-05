@@ -19,6 +19,10 @@ export const SocketContextProvider = ({ children }) => {
         query: {
           userId: authUser._id,
         },
+        transports: ["websocket", "polling"],
+        extraHeaders: {
+          "Access-Control-Allow-Origin": "*",
+        },
       });
 
       setSocket(socket);
@@ -28,7 +32,12 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
-      return () => socket.close();
+      return () => {
+        if (socket.readyState === 1) {
+          // <-- This is important
+          socket.close();
+        }
+      };
     } else {
       if (socket) {
         socket.close();
