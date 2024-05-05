@@ -20,7 +20,7 @@ const useSendMessage = () => {
         }
       );
       const data = await res.json();
-      if (res.status === 500) throw new Error(data.message);
+      if (data.error) throw new Error(data.error);
 
       setMessages([...messages, data]);
     } catch (error) {
