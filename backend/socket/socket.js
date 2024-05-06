@@ -11,13 +11,21 @@ app.use(cors({
 ));
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+
+});
+
+const userSocketMap = {}; // {userId: socketId}
 
 export const getReceiverSocketId = (receiverId) => {
+  // console.log(`receiverId is ${receiverId} userSocketMap is ${userSocketMap}`);
   return userSocketMap[receiverId];
 };
 
-const userSocketMap = {}; // {userId: socketId}
 
 io.on("connection", (socket) => {
   console.log("a user connected", socket.id);

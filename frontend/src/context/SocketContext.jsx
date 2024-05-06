@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useAuthContext } from "./AuthContext";
-import io from "socket.io-client";
+import { io } from "socket.io-client";
 
 const SocketContext = createContext();
 
@@ -14,37 +14,46 @@ export const SocketContextProvider = ({ children }) => {
   const { authUser } = useAuthContext();
 
   useEffect(() => {
-    if (authUser) {
-      const socket = io("https://chat-app-yt.onrender.com", {
-        query: {
-          userId: authUser._id,
-        },
-        transports: ["websocket", "polling"],
-        extraHeaders: {
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
-
-      setSocket(socket);
-
-      // socket.on() is used to listen to the events. can be used both on client and server side
-      socket.on("getOnlineUsers", (users) => {
-        setOnlineUsers(users);
-      });
-
-      return () => {
-        if (socket.readyState === 1) {
-          // <-- This is important
-          socket.close();
-        }
-      };
-    } else {
-      if (socket) {
-        socket.close();
-        setSocket(null);
-      }
+    if (!authUser) {
+      // No authenticated user yet, do nothing or show a loading indicator
+      return;
     }
+
+    const url = "http://localhost:5000";
+    // console.log(authUser._id); 
+
+    const socket = io.connect(url, {
+      query: {
+        userId: authUser._id,
+      }
+    })
+    // const socket = io(url, {
+    //   autoConnect: false ,
+    //   query: {
+    //     userId: authUser._id,
+    //   },
+    //   extraHeaders: {
+    //     "Access-Control-Allow-Origin": "*",
+    //   },
+    // });
+
+    // console.log(socket);
+
+    setSocket(socket);
+
+    // Add event listeners
+    socket.on("getOnlineUsers", (users) => {
+      setOnlineUsers(users);
+    });
+
+    // Clean up socket on unmount
+    return () => {
+      if (socket.connected) {
+        socket.close();
+      }
+    };
   }, [authUser]);
+
 
   return (
     <SocketContext.Provider value={{ socket, onlineUsers }}>

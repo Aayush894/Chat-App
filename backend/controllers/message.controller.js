@@ -15,6 +15,8 @@ export const sendMessage = async (req, res) => {
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [senderId, receiverId],
+        messages: [],
+        unreadMessages: 0,
       });
     }
 
@@ -22,6 +24,8 @@ export const sendMessage = async (req, res) => {
       senderId,
       receiverId,
       message,
+      isSent: true,
+      isRead: false,
     });
 
     if (newMessage) {
@@ -53,17 +57,30 @@ export const getMessages = async (req, res) => {
     const { id: userToChatId } = req.params;
     const senderId = req.user._id;
 
+    // Find the conversation between senderId and userToChatId
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
-    }).populate("messages"); // NOT REFERENCE BUT ACTUAL MESSAGES
+    }).populate("messages");
 
-    if (!conversation) return res.status(200).json([]);
+    if (!conversation) {
+      return res.status(200).json([]); // Return an empty array if no conversation found
+    }
 
+    // Get the messages from the conversation
     const messages = conversation.messages;
 
+    // Update isRead field and save each message
+    for (const message of messages) {
+      // Update isRead to true
+      message.isRead = true;
+      await message.save(); // Save the updated message
+    }
+
+    // Return the updated messages
     res.status(200).json(messages);
   } catch (error) {
     console.log("Error in getMessages controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
