@@ -19,7 +19,7 @@ export const SocketContextProvider = ({ children }) => {
       return;
     }
 
-    const url = "http://localhost:5000";
+    const url = "https://chat-app-7935.onrender.com/";
     // console.log(authUser._id); 
 
     const socket = io.connect(url, {
