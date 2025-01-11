@@ -1,6 +1,7 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { encryptString, decryptString } from "../utils/crypto.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -20,10 +21,12 @@ export const sendMessage = async (req, res) => {
       });
     }
 
+    const encryptedMessage = await encryptString(message, process.env.ENCRYPTION_KEY); 
+
     const newMessage = new Message({
       senderId,
       receiverId,
-      message,
+      message: encryptedMessage,
       isSent: true,
       isRead: false,
     });
@@ -32,10 +35,6 @@ export const sendMessage = async (req, res) => {
       conversation.messages.push(newMessage._id);
     }
 
-    // await conversation.save();
-    // await newMessage.save();
-
-    // this will run in parallel
     await Promise.all([conversation.save(), newMessage.save()]);
 
     // SOCKET IO FUNCTIONALITY WILL GO HERE
@@ -45,7 +44,7 @@ export const sendMessage = async (req, res) => {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    res.status(201).json(newMessage);
+    res.status(201).json({...(newMessage._doc), message: message});
   } catch (error) {
     console.log("Error in sendMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -60,24 +59,34 @@ export const getMessages = async (req, res) => {
     // Find the conversation between senderId and userToChatId
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
-    }).populate("messages");
+    }).populate("messages"); 
 
     if (!conversation) {
       return res.status(200).json([]); // Return an empty array if no conversation found
     }
 
-    // Get the messages from the conversation
     const messages = conversation.messages;
 
-    // Update isRead field and save each message
-    for (const message of messages) {
-      // Update isRead to true
+    const decryptedMessages = await Promise.all(messages.map(async (message) => {
       message.isRead = true;
-      await message.save(); // Save the updated message
-    }
-
-    // Return the updated messages
-    res.status(200).json(messages);
+      await message.save();
+      console.log(message);
+    
+      const decryptedMessage = await decryptString(message.message, process.env.ENCRYPTION_KEY);
+      
+      return { 
+        senderId:message.senderId,
+        receiverId: message.receiverId,
+        isRead: message.isRead,
+        isSent: message.isSent,
+        _id: message._id,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+        message: decryptedMessage 
+      };
+    }));
+    
+    res.status(200).json(decryptedMessages);
   } catch (error) {
     console.log("Error in getMessages controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
